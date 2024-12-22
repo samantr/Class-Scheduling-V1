@@ -8,19 +8,26 @@ import java.util.List;
 
 public class GeneticAlgorithmExecutor {
     public static void main(String[] args) {
+        // Initialize parameters
+        int populationSize = 300;
+        int maxGenerations = 500;
+        double mutationRate = 0.05;
+        int maxStagnation = 500;
+        double crossoverRate = 0.9;
+
+        schedule(populationSize, mutationRate, maxGenerations, maxStagnation, crossoverRate);
+    }
+
+
+    public static void schedule(int populationSize, double mutationRate, int maxGenerations, int maxStagnation, double crossoverRate)
+    {
         // Fetch data from the database
         List<Teacher> teachers = MSSQLDatabaseConnector.fetchPersons();
         List<Classroom> classrooms = MSSQLDatabaseConnector.fetchClassRooms();
         List<Subject> subjects = MSSQLDatabaseConnector.fetchSubject();
         List<TimeSlot> timeSlots = TimeSlot.generateSampleTimeSlots(); // Mock data for now
 
-        // Initialize parameters
-        int populationSize = 300;
-        int maxGenerations = 500;
-        double mutationRate = 0.05;
-        int maxStagnation = 500;
 
-        double crossoverRate = 0.9;
 
         // Create initial population
         Population population = new Population(populationSize, subjects, teachers, classrooms, timeSlots);
