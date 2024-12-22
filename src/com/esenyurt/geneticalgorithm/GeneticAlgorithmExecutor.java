@@ -39,8 +39,10 @@ public class GeneticAlgorithmExecutor {
         long runId = MSSQLDatabaseConnector.insertRun(run);
         int bestFitness = Integer.MIN_VALUE;
         int stagnationCount = 0;
+        int currentGeneration = 1;
         // Evolve the population over multiple generations
         for (int generation = 1; generation <= maxGenerations; generation++) {
+            currentGeneration = generation;
             // Get the fittest chromosome of this generation
             List<Schedule> fittestChromosome = population.getFittestChromosome();
             int fitness = FitnessCalculator.calculateChromosomeFitness(fittestChromosome);
@@ -71,7 +73,7 @@ public class GeneticAlgorithmExecutor {
         int finalFitness = FitnessCalculator.calculateChromosomeFitness(finalFittest);
         System.out.printf("Final Best Fitness: %d%n", finalFitness);
         try {
-            MSSQLDatabaseConnector.insertSchedules(finalFittest, (int) runId, 500, finalFitness, 1);
+            MSSQLDatabaseConnector.insertSchedules(finalFittest, (int) runId, currentGeneration, finalFitness, 1);
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
