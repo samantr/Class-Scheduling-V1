@@ -15,7 +15,7 @@ public class GeneticAlgorithmExecutor {
         int maxStagnation = 500;
         double crossoverRate = 0.9;
 
-        String desc = "Improved Algorithm";
+        String desc = "Normal Algorithm";
 
 
         schedule(50,mutationRate, maxGenerations, maxStagnation, crossoverRate, desc );
