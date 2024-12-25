@@ -183,8 +183,8 @@ public class MSSQLDatabaseConnector {
         return subjectList;
     }
 
-    public static long insertRun(RunEntity run) {
-        String sql = "INSERT INTO tbl_run (population_size, generation_count) VALUES (?, ?)";
+    public static long insertRun(RunEntity run,String desc) {
+        String sql = "INSERT INTO tbl_run (population_size, generation_count,dsc) VALUES (?, ?, ?)";
         long id = 0;
 
         try (Connection connection = connectToDatabase();
@@ -193,6 +193,7 @@ public class MSSQLDatabaseConnector {
             // Set parameters for the INSERT query
             pstmt.setInt(1, run.populationSize);
             pstmt.setInt(2, run.generationCount);
+            pstmt.setString(3,desc);
 
             // Execute the INSERT query
             int rowsAffected = pstmt.executeUpdate();
@@ -295,4 +296,52 @@ public class MSSQLDatabaseConnector {
         return timeSlot;
 
     }
+
+    public static void insertSchedulesBatch(List<Schedule> scheduleList, int runId, int generationNo, int fitness, int chromosomeNo) throws SQLException {
+        String sql = "INSERT INTO tbl_schedule (teacher_id, day_of_the_week, time_begin, time_end, subject_id, classroom_id, run_id, generation_no, fitness, chromosome_no, created_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, getdate())";
+        Connection connection = connectToDatabase();
+
+        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+            connection.setAutoCommit(false); // Disable auto-commit for batch processing
+
+            for (Schedule schedule : scheduleList) {
+                // Set the values for the placeholders
+                pstmt.setInt(1, schedule.teacher.getId());
+                pstmt.setInt(2, schedule.timeSlot.day.getValue());
+
+                Time sqlTime = Time.valueOf(schedule.timeSlot.time.label);
+                pstmt.setTime(3, sqlTime);
+
+                long threeHoursInMillis = schedule.subject.units * 60 * 60 * 1000;
+                Time endTime = new Time(sqlTime.getTime() + threeHoursInMillis);
+                pstmt.setTime(4, endTime);
+
+                pstmt.setInt(5, schedule.subject.id);
+                pstmt.setInt(6, schedule.classroom.id);
+                pstmt.setInt(7, runId);
+                pstmt.setInt(8, generationNo);
+                pstmt.setInt(9, fitness);
+                pstmt.setInt(10, chromosomeNo);
+
+                pstmt.addBatch(); // Add the insert to the batch
+            }
+
+            // Execute the batch
+            int[] result = pstmt.executeBatch();
+            connection.commit(); // Commit transaction
+            System.out.println("Batch insert completed. Rows inserted: " + result.length);
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            try {
+                connection.rollback(); // Rollback if an error occurs
+                System.out.println("Transaction rolled back.");
+            } catch (SQLException rollbackEx) {
+                rollbackEx.printStackTrace();
+            }
+        } finally {
+            connection.close();
+        }
+    }
+
 }

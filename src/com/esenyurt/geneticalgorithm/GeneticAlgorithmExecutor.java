@@ -9,17 +9,25 @@ import java.util.List;
 public class GeneticAlgorithmExecutor {
     public static void main(String[] args) {
         // Initialize parameters
-        int populationSize = 300;
+        int populationSize = 1000;
         int maxGenerations = 500;
         double mutationRate = 0.05;
         int maxStagnation = 500;
         double crossoverRate = 0.9;
 
-        schedule(populationSize, mutationRate, maxGenerations, maxStagnation, crossoverRate);
+        String desc = "Improved Algorithm";
+
+
+        schedule(50,mutationRate, maxGenerations, maxStagnation, crossoverRate, desc );
+        schedule(100,mutationRate, maxGenerations, maxStagnation,crossoverRate,desc );
+        schedule(200,mutationRate, maxGenerations, maxStagnation,crossoverRate,desc );
+        schedule(500,mutationRate, maxGenerations, maxStagnation,crossoverRate,desc );
+        schedule(1000,mutationRate, maxGenerations, maxStagnation,crossoverRate,desc );
+
     }
 
 
-    public static void schedule(int populationSize, double mutationRate, int maxGenerations, int maxStagnation, double crossoverRate)
+    public static void schedule(int populationSize, double mutationRate, int maxGenerations, int maxStagnation, double crossoverRate, String desc)
     {
         // Fetch data from the database
         List<Teacher> teachers = MSSQLDatabaseConnector.fetchPersons();
@@ -36,7 +44,7 @@ public class GeneticAlgorithmExecutor {
         RunEntity run = new RunEntity();
         run.populationSize = populationSize;
         run.generationCount = maxGenerations;
-        long runId = MSSQLDatabaseConnector.insertRun(run);
+        long runId = MSSQLDatabaseConnector.insertRun(run,desc);
         int bestFitness = Integer.MIN_VALUE;
         int stagnationCount = 0;
         int currentGeneration = 1;
@@ -58,6 +66,12 @@ public class GeneticAlgorithmExecutor {
                 stagnationCount++;
 
             System.out.printf("Generation %d: Best Fitness = %d%n", generation, fitness);
+
+            try {
+                MSSQLDatabaseConnector.insertSchedulesBatch(population.getFittestChromosome(), (int) runId, currentGeneration, fitness, 1);
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
+            }
 
             if (stagnationCount > maxStagnation )
             {
